@@ -1,0 +1,62 @@
+-- Write your query for task 1 in this cell
+
+SELECT count(*) AS missing_year
+FROM products
+WHERE year_added IS NULL;
+
+
+
+-- Write your query for task 2 in this cell
+
+WITH ModifiedData AS (
+    SELECT
+        product_id,
+        COALESCE(product_type, 'Unknown') AS product_type,
+        COALESCE(
+            CASE 
+                WHEN brand IS NULL OR brand = '-' THEN 'Unknown'
+                ELSE brand
+            END, 'Unknown'
+        ) AS brand,
+        COALESCE(CAST(REPLACE(weight, ' grams', '') AS numeric), 
+            COALESCE((SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY CAST(REPLACE(weight, ' grams', '') AS numeric)) FROM products WHERE weight IS NOT NULL), 0)
+        ) AS weight,
+        COALESCE(ROUND(CAST(price AS numeric), 2), 
+            COALESCE((SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY price) FROM products WHERE price IS NOT NULL), 0)
+        ) AS price,
+        COALESCE(average_units_sold, 0) AS average_units_sold,
+        COALESCE(CAST(year_added AS INTEGER), 2022) AS year_added,
+        COALESCE(UPPER(stock_location), 'Unknown') AS stock_location
+    FROM
+        products
+)
+
+SELECT
+    product_id,
+    product_type,
+    brand,
+    weight,
+    price,
+    average_units_sold,
+    year_added,
+    stock_location
+FROM
+    ModifiedData;
+
+
+-- Write your query for task 3 in this cell
+
+Select product_type, min(price) as min_price, max(price) as max_price
+from products
+group by product_type;
+
+-- Write your query for task 4 in this cell
+SELECT
+    product_id,
+    price,
+    average_units_sold
+FROM
+    products
+WHERE
+    (product_type = 'Meat' OR product_type = 'Dairy')
+    AND average_units_sold > 10;
